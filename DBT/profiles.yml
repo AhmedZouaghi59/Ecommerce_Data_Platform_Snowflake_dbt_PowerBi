@@ -1,0 +1,10 @@
+dbt:
+  target: dev
+  outputs:
+    dev:
+      type: snowflake
+      role: ECOMMERCE_DBT
+      warehouse: ECOMMERCE_WH
+      database: ECOMMERCE_DWH
+      schema: DWH
+      threads: 8
