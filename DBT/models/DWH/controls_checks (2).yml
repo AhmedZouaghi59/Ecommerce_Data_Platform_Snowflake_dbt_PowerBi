@@ -1,0 +1,194 @@
+version: 2
+
+models:
+
+  # ==========================================================
+  # DIMENSION CLIENT
+  # ==========================================================
+
+  - name: dim_customer_dwh
+    description: "Dimension clients issue des données RAW Superstore."
+
+    columns:
+
+      - name: customer_id
+        description: "Identifiant unique du client."
+        tests:
+          - not_null
+          - unique
+
+      - name: customer_name
+        description: "Nom du client."
+        tests:
+          - not_null
+
+      - name: segment
+        description: "Segment client."
+        tests:
+          - not_null
+
+
+  # ==========================================================
+  # DIMENSION PRODUIT
+  # ==========================================================
+
+  - name: dim_product_dwh
+    description: "Dimension produits issue des données RAW Superstore."
+
+    columns:
+
+      - name: product_id
+        description: "Identifiant unique du produit."
+        tests:
+          - not_null
+          - unique
+
+      - name: product_name
+        description: "Nom du produit."
+        tests:
+          - not_null
+
+      - name: category
+        description: "Catégorie du produit."
+        tests:
+          - not_null
+
+      - name: sub_category
+        description: "Sous-catégorie du produit."
+        tests:
+          - not_null
+
+
+  # ==========================================================
+  # DIMENSION GEOGRAPHIQUE
+  # ==========================================================
+
+  - name: dim_location_dwh
+    description: "Dimension géographique issue des données RAW Superstore."
+
+    columns:
+
+      - name: country
+        description: "Pays."
+        tests:
+          - not_null
+
+      - name: city
+        description: "Ville."
+        tests:
+          - not_null
+
+      - name: state
+        description: "État ou région administrative."
+        tests:
+          - not_null
+
+      - name: region
+        description: "Région commerciale."
+        tests:
+          - not_null
+
+
+  # ==========================================================
+  # DIMENSION EXPEDITION
+  # ==========================================================
+
+  - name: dim_shipping_dwh
+    description: "Dimension des modes de livraison."
+
+    columns:
+
+      - name: ship_mode
+        description: "Mode de livraison."
+        tests:
+          - not_null
+          - unique
+
+
+  # ==========================================================
+  # TABLE DE FAITS
+  # ==========================================================
+
+  - name: fact_sales_dwh
+    description: "Table de faits des ventes issue des données RAW Superstore."
+
+    # --------------------------------------------------------
+    # Tests au niveau du modèle
+    # --------------------------------------------------------
+
+    tests:
+
+      - ship_date_after_order_date:
+          order_date_column: order_date
+          ship_date_column: ship_date
+
+    # --------------------------------------------------------
+    # Tests au niveau des colonnes
+    # --------------------------------------------------------
+
+    columns:
+
+      - name: row_id
+        description: "Identifiant unique de la ligne de vente."
+        tests:
+          - not_null
+          - unique
+
+      - name: order_id
+        description: "Identifiant de la commande."
+        tests:
+          - not_null
+
+      - name: order_date
+        description: "Date de commande."
+        tests:
+          - not_null
+
+      - name: ship_date
+        description: "Date d'expédition."
+        tests:
+          - not_null
+
+      - name: ship_mode
+        description: "Mode de livraison associé à la vente."
+        tests:
+          - not_null
+
+      - name: customer_id
+        description: "Identifiant du client."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer_dwh')
+              field: customer_id
+
+      - name: product_id
+        description: "Identifiant du produit."
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_product_dwh')
+              field: product_id
+
+      - name: sales
+        description: "Montant de la vente."
+        tests:
+          - not_null
+          - sales_positive
+
+      - name: quantity
+        description: "Quantité vendue."
+        tests:
+          - not_null
+          - quantity_positive
+
+      - name: discount
+        description: "Taux de remise compris entre 0 et 1."
+        tests:
+          - not_null
+          - discount_valid
+
+      - name: profit
+        description: "Bénéfice associé à la vente."
+        tests:
+          - not_null
