@@ -1,10 +1,14 @@
 # 🗄️ SQL — Snowflake
 
-Ce dossier regroupe les scripts SQL utilisés pour mettre en place l'environnement Snowflake du projet **E-Commerce Data Platform**.
+Le dossier `SQL` regroupe les scripts **SQL utilisés pour configurer l'environnement Snowflake et réaliser l'ingestion initiale des données** du projet **E-Commerce Data Platform**.
 
-Cette partie correspond principalement à la **configuration de la plateforme, à la gestion des accès et à l'ingestion initiale des données**. Les transformations et les contrôles de qualité intégrés au pipeline sont ensuite pris en charge par dbt.
+Cette partie intervient en amont de dbt. Elle permet de préparer la plateforme, de définir les différents espaces de travail, de gérer les accès et de charger les données sources dans la couche `RAW`.
 
-## 📂 Organisation
+Les transformations, la modélisation et les contrôles de qualité réalisés dans le cadre du pipeline sont ensuite pris en charge par **dbt**.
+
+---
+
+## 📂 Organisation du projet
 
 ```text
 SQL/
@@ -26,31 +30,41 @@ SQL/
 
 ---
 
-## ⚙️ 01_SETUP
+# ⚙️ 01 — SETUP
 
-Le dossier `01_SETUP` contient les scripts nécessaires à la création et à la configuration de l'environnement Snowflake.
+Le dossier `01_SETUP` contient les scripts nécessaires à la mise en place de l'environnement Snowflake.
 
-### `01_create_database.sql`
+L'objectif est de disposer d'une structure claire dès le début du projet, avec une séparation entre les données, les traitements et les différents usages de la plateforme.
 
-Création de la base de données utilisée par le projet :
+---
+
+## 🗃️ Création de la base de données
+
+Le script `01_create_database.sql` permet de créer la base utilisée par le projet :
 
 ```text
 ECOMMERCE_DWH
 ```
 
-Cette base constitue le point central de stockage des données.
+Cette base constitue le point central de stockage des données utilisées dans le pipeline.
 
-### `02_create_warehouse.sql`
+---
 
-Création du warehouse Snowflake utilisé pour exécuter les requêtes SQL et les transformations dbt :
+## ⚡ Création du Warehouse
+
+Le script `02_create_warehouse.sql` crée le warehouse Snowflake utilisé pour exécuter les requêtes SQL et les traitements dbt :
 
 ```text
 ECOMMERCE_WH
 ```
 
-### `03_create_roles.sql`
+Le warehouse constitue la ressource de calcul utilisée pour les opérations réalisées dans Snowflake.
 
-Création des rôles utilisés dans le projet afin de séparer les responsabilités :
+---
+
+## 👤 Gestion des rôles
+
+Le script `03_create_roles.sql` crée les rôles utilisés dans le projet :
 
 ```text
 ECOMMERCE_ADMIN
@@ -60,9 +74,17 @@ ECOMMERCE_BI
 
 Chaque rôle correspond à un usage différent de la plateforme.
 
-### `04_create_schemas.sql`
+Cette organisation permet notamment de distinguer :
 
-Création des différentes couches du Data Warehouse :
+* l'administration de l'environnement ;
+* les traitements réalisés par dbt ;
+* l'accès utilisé pour la restitution BI.
+
+---
+
+## 🏗️ Création des schémas
+
+Le script `04_create_schemas.sql` crée les différentes couches du Data Warehouse :
 
 ```text
 ECOMMERCE_DWH
@@ -71,74 +93,102 @@ ECOMMERCE_DWH
 └── SEM
 ```
 
-- **RAW** : données sources chargées dans Snowflake.
-- **DWH** : données structurées et transformées avec dbt.
-- **SEM** : couche de restitution destinée à Power BI.
+### `RAW`
 
-### `05_grant_permissions.sql`
+Contient les données sources après leur ingestion dans Snowflake.
 
-Attribution des permissions nécessaires aux différents rôles.
+### `DWH`
 
-L'objectif est notamment de permettre à dbt de lire les données RAW et de construire les modèles DWH/SEM, tout en conservant un accès en lecture pour la partie BI.
+Contient les données structurées et modélisées avec dbt.
+
+### `SEM`
+
+Correspond à la couche analytique utilisée pour préparer les données destinées à Power BI.
+
+Cette organisation permet de séparer clairement les données sources, les traitements et la restitution.
 
 ---
 
-## 📥 02_INGESTION
+## 🔐 Gestion des permissions
 
-Le dossier `02_INGESTION` correspond à l'intégration initiale du dataset Superstore dans Snowflake.
+Le script `05_grant_permissions.sql` permet d'attribuer les droits nécessaires aux différents rôles.
 
-### `01_create_raw_table.sql`
+L'objectif est notamment de permettre :
 
-Création de la table source :
+* à `ECOMMERCE_DBT` d'accéder aux données nécessaires et de construire les modèles ;
+* à `ECOMMERCE_BI` d'accéder aux données destinées à la restitution ;
+* à `ECOMMERCE_ADMIN` de gérer l'environnement Snowflake.
+
+La gestion des rôles et permissions permet ainsi de conserver une séparation simple entre les différents usages de la plateforme.
+
+---
+
+# 📥 02 — INGESTION
+
+Le dossier `02_INGESTION` correspond à l'intégration initiale du dataset **Superstore** dans Snowflake.
+
+Cette étape permet de faire passer les données du fichier source vers la couche `RAW`, qui constitue le point de départ du pipeline de transformation.
+
+---
+
+## 📋 Création de la table RAW
+
+Le script `01_create_raw_table.sql` crée la table :
 
 ```text
 ECOMMERCE_DWH.RAW.RAW_SUPERSTORE
 ```
 
-La table reprend les données du dataset Superstore utilisées comme point de départ du projet.
+Cette table contient les données sources utilisées comme point de départ du projet.
 
-### `02_load_raw.sql`
-
-Chargement des données sources dans la table RAW.
-
-Cette étape permet de faire entrer les données dans Snowflake avant leur transformation avec dbt.
-
-Le principe est de conserver une couche RAW proche de la source afin de séparer clairement :
-
-```text
-Source
-  ↓
-RAW
-  ↓
-Transformations dbt
-```
-
-### `03_data_quality_checks.sql`
-
-Ce script contient les premiers contrôles réalisés directement sur les données RAW afin de vérifier leur cohérence après l'ingestion.
-
-Les contrôles portent notamment sur :
-
-- le nombre de lignes ;
-- le nombre de commandes ;
-- le nombre de clients ;
-- le nombre de produits ;
-- la période couverte par les données ;
-- le chiffre d'affaires et le bénéfice ;
-- les valeurs NULL ;
-- les quantités invalides ;
-- les remises hors intervalle ;
-- les ventes négatives.
-
-Ces contrôles servent principalement à **valider la qualité de la source après ingestion**.
-
-Les contrôles de qualité récurrents du projet sont ensuite centralisés dans dbt à travers les tests YAML et les tests métier personnalisés.
+L'objectif est de conserver une version proche de la source avant d'appliquer les transformations métier.
 
 ---
 
-## 🔄 Place de la partie SQL dans l'architecture
+## 📤 Chargement des données
 
-Les scripts SQL permettent de préparer la plateforme et d'intégrer la donnée avant le traitement dbt.
+Le script `02_load_raw.sql` permet de charger les données du dataset dans la table RAW.
+
+Le principe suivi est de conserver une séparation entre l'ingestion et les transformations :
+
+```text
+Superstore CSV
+      ↓
+Snowflake RAW
+      ↓
+Transformations dbt
+```
+
+La couche `RAW` joue ainsi le rôle de zone d'atterrissage avant les traitements réalisés dans dbt.
+
+---
+
+# ✅ Contrôles après ingestion
+
+Le script `03_data_quality_checks.sql` contient les premiers contrôles réalisés directement dans Snowflake après le chargement des données.
+
+Ces contrôles permettent notamment de vérifier :
+
+* le nombre de lignes chargées ;
+* le nombre de commandes ;
+* le nombre de clients ;
+* le nombre de produits ;
+* la période couverte par les données ;
+* les montants de ventes et de bénéfices ;
+* la présence de valeurs `NULL` ;
+* les quantités invalides ;
+* les remises hors intervalle ;
+* la présence éventuelle de ventes négatives.
+
+L'objectif est de vérifier que les données ont bien été chargées et qu'elles présentent une structure cohérente avant de lancer les transformations dbt.
+
+Les contrôles de qualité intégrés au pipeline sont ensuite centralisés dans **dbt**, avec des tests standards et des règles métier personnalisées.
+
+---
+
+# 🔄 Place de SQL dans l'architecture
+
+Les scripts SQL constituent la première étape technique du pipeline.
 
 ```text
 Superstore CSV
@@ -160,37 +210,64 @@ SEM
 Power BI
 ```
 
-La séparation des responsabilités est donc la suivante :
+La répartition des responsabilités est la suivante :
 
 ```text
 SQL
-→ Configuration, administration et ingestion initiale
+→ Configuration de Snowflake
+→ Gestion des rôles et permissions
+→ Création des structures
+→ Ingestion initiale
+→ Contrôles après chargement
 
 dbt
-→ Transformation, modélisation et Data Quality
+→ Transformations SQL
+→ Modélisation DWH
+→ Nettoyage et standardisation
+→ Data Quality
 
 Power BI
-→ Analyse et restitution
+→ Modèle analytique
+→ KPIs
+→ Visualisation et restitution
 ```
 
----
-
-## 🛠️ Technologies
-
-- Snowflake
-- SQL
-- Git / GitHub
-- dbt
-- Power BI
+Cette séparation permet de garder une chaîne de traitement lisible et de distinguer les étapes d'ingestion des transformations analytiques.
 
 ---
 
-## ✅ Résultat
+# 🎯 Ce que cette partie met en pratique
 
-À l'issue de cette étape, l'environnement Snowflake est initialisé et les données sources sont disponibles dans :
+Cette partie du projet permet de mettre en pratique plusieurs compétences liées à un environnement Data :
+
+* création et organisation d'une base Snowflake ;
+* utilisation des warehouses ;
+* gestion des rôles et des permissions ;
+* organisation d'un Data Warehouse en plusieurs couches ;
+* ingestion de données dans une table `RAW` ;
+* contrôles SQL après ingestion ;
+* préparation d'un environnement pour dbt et Power BI.
+
+---
+
+# ✅ Résultat
+
+À l'issue de cette étape, l'environnement Snowflake est configuré et les données sources sont disponibles dans :
 
 ```text
 ECOMMERCE_DWH.RAW.RAW_SUPERSTORE
 ```
 
-La base est ensuite prête pour la transformation et la modélisation avec dbt.
+La plateforme est alors prête pour l'étape suivante du pipeline : **la transformation et la modélisation des données avec dbt**.
+
+```text
+Snowflake RAW
+      ↓
+     dbt
+      ↓
+     DWH
+      ↓
+     SEM
+      ↓
+   Power BI
+```
