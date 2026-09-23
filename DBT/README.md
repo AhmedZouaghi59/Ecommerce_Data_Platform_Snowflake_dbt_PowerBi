@@ -1,12 +1,14 @@
 # 🔧 DBT — Transformation & Data Quality
 
-Le dossier `DBT` contient le projet **dbt** utilisé pour transformer les données du projet E-Commerce dans Snowflake.
+Le dossier `DBT` contient le projet **dbt** utilisé pour transformer et préparer les données du projet E-Commerce dans **Snowflake**.
 
-dbt intervient après l'ingestion des données dans la couche `RAW`. Les données sont ensuite structurées dans la couche `DWH`, puis font l'objet d'une **phase de nettoyage et de préparation** avant d'être exposées dans la couche `SEM` et consommées par Power BI.
+Après leur ingestion dans la couche `RAW`, les données sont structurées dans le **Data Warehouse (`DWH`)**, puis nettoyées et préparées dans une couche **Semantic (`SEM`)** avant d'être consommées par **Power BI**.
 
-L'objectif est de centraliser dans dbt la logique de **transformation, de nettoyage, de modélisation et de Data Quality**, tout en gardant les différentes étapes clairement séparées.
+L'objectif est de centraliser dans dbt les principales transformations SQL, la modélisation des données et les contrôles de qualité, tout en séparant clairement les différentes étapes du traitement.
 
-## 📂 Organisation
+---
+
+## 📂 Organisation du projet
 
 ```text
 DBT/
@@ -16,8 +18,7 @@ DBT/
 │
 ├── models/
 │   ├── DWH/
-│   │   ├── ...
-│   │   └── schema.yml
+│   │   └── ...
 │   │
 │   ├── SEM/
 │   │   └── ...
@@ -29,9 +30,11 @@ DBT/
 └── profiles.yml
 ```
 
-## 🔄 Flux de transformation
+---
 
-Le projet suit une architecture en plusieurs étapes :
+## 🔄 Architecture de transformation
+
+Le flux de données suit une architecture simple en plusieurs couches :
 
 ```text
 Snowflake RAW
@@ -48,80 +51,89 @@ Snowflake RAW
    Power BI
 ```
 
-La couche `RAW` contient les données sources. dbt les référence avec `source()` et construit ensuite les modèles du DWH.
+### RAW
 
-La couche `DWH` permet de structurer les données et de construire les différentes dimensions ainsi que la table de faits.
+La couche `RAW` contient les données sources après leur ingestion dans Snowflake (via upload local).
 
-Entre le `DWH` et le `SEM`, une étape importante de **nettoyage et de préparation des données** est réalisée. Cette phase permet de préparer une donnée propre et homogène avant sa consommation par Power BI.
+Elle constitue le point de départ des transformations dbt.
+
+### DWH
+
+La couche `DWH` permet de structurer les données pour l'analyse en construisant les différentes dimensions et la table de faits.
+
+### SEM
+
+La couche `SEM` correspond à la couche analytique finale. Les données y sont nettoyées, standardisées et préparées pour être directement exploitées dans Power BI.
 
 ---
 
-## 🏗️ Modèles DWH
+# 🏗️ Modélisation du Data Warehouse
 
-Le dossier `models/DWH` contient les modèles qui construisent le Data Warehouse.
+Le dossier `models/DWH` contient les modèles utilisés pour construire le Data Warehouse.
 
-La couche DWH comprend notamment :
+Les principaux modèles sont :
 
-- `dim_customer_dwh` : dimension clients ;
-- `dim_product_dwh` : dimension produits ;
-- `dim_location_dwh` : dimension géographique ;
-- `dim_shipping_dwh` : dimension des modes de livraison ;
-- `fact_sales_dwh` : table de faits des ventes.
+* `dim_customer_dwh` : dimension clients ;
+* `dim_product_dwh` : dimension produits ;
+* `dim_location_dwh` : dimension géographique ;
+* `dim_shipping_dwh` : dimension des modes de livraison ;
+* `fact_sales_dwh` : table de faits des ventes.
 
 Les transformations réalisées à ce niveau permettent notamment de :
 
-- sélectionner les données nécessaires à l'analyse ;
-- structurer les dimensions et la table de faits ;
-- dédupliquer certaines dimensions ;
-- préparer les relations entre les faits et les dimensions ;
-- construire une base cohérente pour la couche analytique.
+* sélectionner les données nécessaires à l'analyse ;
+* structurer les dimensions et la table de faits ;
+* dédupliquer certaines dimensions ;
+* préparer les relations entre les faits et les dimensions ;
+* construire une base cohérente pour la couche analytique.
 
-Par exemple, la dimension produit est dédupliquée au niveau du `Product ID` afin d'éviter les doublons lors des relations avec la table de faits.
+Par exemple, la dimension produit est dédupliquée à partir du `Product ID` afin d'éviter plusieurs occurrences d'un même produit dans le modèle.
 
-Le fichier `schema.yml` contient les tests de qualité appliqués aux modèles DWH.
+Le fichier `schema.yml` contient les principaux tests de qualité appliqués aux modèles DWH.
 
 ---
 
-## 🧹 Nettoyage & préparation entre DWH et SEM
+# 🧹 Nettoyage et préparation des données
 
-Avant d'alimenter la couche `SEM`, les données passent par une **phase de nettoyage et de standardisation**.
+Une phase de nettoyage et de standardisation est réalisée avant l'alimentation de la couche `SEM`.
 
-Cette étape est importante car le DWH sert principalement à structurer et modéliser les données, tandis que la couche SEM doit fournir une donnée directement exploitable par l'outil BI.
+Cette étape permet de fournir à Power BI des données plus propres, homogènes et adaptées à l'analyse.
 
-Les transformations réalisées dans cette phase comprennent notamment :
+Les transformations comprennent notamment :
 
-- suppression des espaces inutiles dans les identifiants et les champs texte avec `TRIM` ;
-- nettoyage des valeurs textuelles ;
-- conversion des dates dans un type `DATE` ;
-- conversion des valeurs numériques dans des types adaptés ;
-- gestion cohérente des décimales pour les montants ;
-- standardisation des noms de colonnes attendus par Power BI ;
-- filtrage des valeurs vides ou invalides sur certaines dimensions ;
-- préparation d'une structure stable pour la restitution.
+* suppression des espaces inutiles avec `TRIM` ;
+* nettoyage des valeurs textuelles ;
+* conversion des dates dans un type `DATE` ;
+* conversion des valeurs numériques dans des types adaptés ;
+* gestion de la précision des montants ;
+* standardisation des noms de colonnes ;
+* filtrage de certaines valeurs vides ou invalides.
 
-Par exemple, dans la table de faits SEM :
+### Exemple : conversion des dates
 
 ```sql
 CAST(order_date AS DATE) AS "Order Date"
 ```
 
-permet de garantir un type date adapté à l'analyse temporelle.
+Cette transformation permet de garantir un type adapté aux analyses temporelles.
 
-Les identifiants et champs textuels sont également nettoyés :
+### Exemple : nettoyage d'un identifiant
 
 ```sql
 TRIM(customer_id) AS "Customer ID"
 ```
 
-et les montants sont convertis avec une précision suffisante :
+Les espaces inutiles sont supprimés afin d'éviter des incohérences lors des jointures ou des contrôles.
+
+### Exemple : gestion des montants
 
 ```sql
 CAST(sales AS NUMBER(18,4)) AS "Sales"
 ```
 
-Cette approche permet de conserver la précision des données dans Snowflake tout en laissant Power BI gérer leur formatage pour la restitution.
+La valeur est conservée avec une précision suffisante dans Snowflake. Le format d'affichage est ensuite géré au niveau de Power BI.
 
-Le flux complet devient donc :
+Le flux global est donc :
 
 ```text
 RAW
@@ -139,90 +151,60 @@ Power BI
 
 ---
 
-## 📊 Modèles SEM
+# 📊 Couche SEM
 
-Le dossier `models/SEM` correspond à la couche de restitution.
+Le dossier `models/SEM` correspond à la couche analytique utilisée pour la restitution.
 
-Les modèles SEM reprennent les données préparées dans le DWH puis appliquent les dernières transformations nécessaires avant leur utilisation dans Power BI.
+Les modèles SEM reprennent les données préparées dans le DWH et appliquent les dernières transformations nécessaires avant leur utilisation dans Power BI.
 
-On y retrouve notamment :
+Les principaux modèles sont :
 
-- `dim_customer.sql`
-- `dim_product.sql`
-- `dim_location.sql`
-- `dim_shipping.sql`
-- `fact_sales.sql`
+* `dim_customer.sql`
+* `dim_product.sql`
+* `dim_location.sql`
+* `dim_shipping.sql`
+* `fact_sales.sql`
 
-La couche SEM sert donc de **couche analytique finale**, avec des données :
+La couche SEM fournit ainsi des données :
 
-- nettoyées ;
-- standardisées ;
-- correctement typées ;
-- adaptées à la consommation BI.
+* nettoyées ;
+* standardisées ;
+* correctement typées ;
+* adaptées à la consommation BI.
 
-L'objectif est de fournir à Power BI une source stable et directement exploitable sans déplacer toute la logique de préparation dans Power Query.
+L'intérêt est de conserver une séparation claire entre la **modélisation du Data Warehouse** et la **préparation des données pour la restitution**.
 
----
-
-## 🔗 Sources
-
-Le fichier :
-
-```text
-models/sources.yml
-```
-
-déclare la source RAW utilisée par dbt.
-
-La source principale du projet est :
-
-```text
-ECOMMERCE_DWH.RAW.RAW_SUPERSTORE
-```
-
-Elle est appelée dans les modèles avec :
-
-```sql
-{{ source('raw', 'raw_superstore') }}
-```
-
-Les dépendances entre les différents modèles sont ensuite gérées avec :
-
-```sql
-{{ ref('nom_du_modele') }}
-```
-
-Cela permet à dbt de comprendre automatiquement l'ordre des transformations et de construire le graphe de dépendances du projet.
+Cela permet également de limiter la quantité de logique de transformation directement implémentée dans Power Query.
 
 ---
 
-## ✅ Data Quality
+# ✅ Data Quality
 
-La qualité des données est gérée directement dans dbt.
+La qualité des données est contrôlée directement dans dbt grâce aux tests déclarés dans les fichiers YAML.
 
-Les tests sont déclarés dans les fichiers YAML et couvrent notamment :
+Les principaux tests utilisés sont :
 
-- `not_null` pour contrôler la complétude ;
-- `unique` pour contrôler l'unicité ;
-- `relationships` pour contrôler l'intégrité référentielle.
+* `not_null` : vérifier qu'une colonne obligatoire n'est pas vide ;
+* `unique` : contrôler l'unicité d'une valeur ;
+* `relationships` : vérifier les relations entre les tables.
 
-Des règles métier personnalisées sont également utilisées pour contrôler certaines valeurs :
+Des contrôles métier personnalisés sont également utilisés pour certaines règles :
 
-- quantité strictement positive ;
-- remise comprise entre 0 et 1 ;
-- ventes non négatives ;
-- cohérence entre date de commande et date d'expédition.
+* quantité strictement positive ;
+* remise comprise entre `0` et `1` ;
+* ventes non négatives ;
+* cohérence entre date de commande et date d'expédition.
 
-Le principe est de déclarer le contrôle dans le YAML et de laisser les macros définir la logique des tests personnalisés.
+Le principe est de déclarer les contrôles dans les fichiers YAML et de centraliser leur logique dans des macros lorsque cela est nécessaire.
 
 ```text
 YAML
  ↓
-Déclaration du test
+Définition du test
  ↓
-Macro
+Macro / logique SQL
  ↓
-Requête SQL de contrôle
+Contrôle des données
  ↓
 dbt test
 ```
@@ -233,43 +215,49 @@ Les tests sont exécutés avec :
 dbt test --target dev
 ```
 
-Les tests permettent ainsi de vérifier la qualité des données avant leur utilisation dans la couche analytique.
+Cette approche permet de vérifier les principales règles de qualité avant d'utiliser les données dans la couche analytique.
 
 ---
 
-## 🧩 Macros
+# 🧩 Macros
 
-Le dossier `macros` contient les règles réutilisables du projet.
+Le dossier `macros` contient les fonctions et règles réutilisables du projet.
 
 Il comprend notamment :
 
-- la macro `generate_schema_name.sql`, utilisée pour gérer les schémas `DWH` et `SEM` ;
-- les tests métier personnalisés utilisés depuis les fichiers YAML.
+### `generate_schema_name.sql`
 
-Les macros permettent de centraliser les règles et de les réutiliser sans dupliquer le SQL.
+Cette macro permet de gérer la génération des schémas utilisés par les modèles `DWH` et `SEM`.
+
+### Tests métier personnalisés
+
+Certaines règles de qualité qui ne sont pas couvertes par les tests standards de dbt sont également définies sous forme de macros.
+
+L'intérêt est de centraliser ces règles afin de pouvoir les réutiliser sans dupliquer la logique SQL.
 
 ---
 
-## ⚙️ Fichiers de configuration
+# ⚙️ Configuration du projet
 
 ### `dbt_project.yml`
 
-Contient la configuration principale du projet :
+Le fichier contient la configuration principale du projet :
 
-- nom du projet ;
-- chemins utilisés par dbt ;
-- configuration des modèles ;
-- matérialisation des différentes couches.
+* nom du projet ;
+* chemins utilisés par dbt ;
+* configuration des modèles ;
+* organisation des différentes couches ;
+* matérialisation des modèles.
 
 ### `packages.yml`
 
-Permet de gérer les éventuelles dépendances externes du projet dbt.
+Ce fichier permet de gérer les éventuelles dépendances externes du projet dbt.
 
 ### `profiles.yml`
 
-Contient la configuration utilisée par dbt pour accéder à Snowflake.
+Il contient la configuration permettant à dbt de se connecter à Snowflake.
 
-Le projet utilise notamment :
+L'environnement utilisé dans le projet comprend notamment :
 
 ```text
 Role      : ECOMMERCE_DBT
@@ -279,11 +267,11 @@ Database  : ECOMMERCE_DWH
 
 ---
 
-## 🚀 Exécution
+# 🚀 Exécution du projet
 
 Les principales commandes utilisées sont :
 
-### Vérifier la configuration
+### Vérifier la connexion et la configuration
 
 ```bash
 dbt debug --target dev
@@ -295,7 +283,7 @@ dbt debug --target dev
 dbt run --target dev
 ```
 
-### Exécuter les tests
+### Exécuter les tests de qualité
 
 ```bash
 dbt test --target dev
@@ -313,37 +301,32 @@ dbt test
 
 ---
 
-## 🎯 Rôle de dbt dans le projet
+# 🎯 Rôle de dbt dans le projet
 
-dbt constitue le cœur de la transformation entre Snowflake RAW et la couche analytique.
+Dans ce projet, **dbt constitue la couche de transformation et de modélisation entre Snowflake RAW et la couche analytique**.
+
+Il permet de centraliser :
 
 ```text
 Snowflake RAW
       ↓
      DBT
       │
-      ├── Structuration
+      ├── Sources
+      ├── Transformations SQL
       ├── Modélisation DWH
       ├── Nettoyage
       ├── Standardisation
-      ├── Dépendances
+      ├── Gestion des dépendances
       └── Data Quality
       ↓
 Snowflake DWH
-      ↓
-Nettoyage / préparation SEM
       ↓
 Snowflake SEM
       ↓
 Power BI
 ```
 
-Cette organisation permet de garder une logique de transformation claire, versionnée et maintenable, tout en séparant les données brutes, le Data Warehouse, la phase de nettoyage et la couche de restitution.
+Cette organisation permet de garder une chaîne de transformation claire et maintenable, tout en séparant les données sources, la modélisation du Data Warehouse et la préparation des données pour la BI.
 
-## 🛠️ Technologies
-
-- dbt
-- Snowflake
-- SQL
-- Jinja
-- Git / GitHub
+Le projet met ainsi en pratique une approche **ELT avec Snowflake et dbt**, où les transformations sont réalisées directement dans l'entrepôt de données avant la restitution dans Power BI.
