@@ -1,122 +1,90 @@
 # 🛒 E-Commerce Data Platform — Snowflake, dbt & Power BI
 
-## 📊 Présentation
+Projet personnel réalisé pour mettre en pratique une **chaîne Data de bout en bout**, depuis l'ingestion de données commerciales jusqu'à leur analyse dans Power BI.
 
-Ce projet personnel consiste à construire une chaîne complète de traitement et d'analyse de données commerciales, depuis l'ingestion d'un dataset e-commerce jusqu'à sa restitution dans Power BI.
+L'objectif est de construire une plateforme simple mais structurée, en séparant clairement les différentes étapes du traitement :
 
-L'objectif n'est pas uniquement de construire un dashboard, mais de mettre en place une **véritable chaîne Data structurée**, avec une séparation claire entre l'ingestion, le stockage, la transformation, la qualité des données et la restitution BI.
+**ingestion → stockage → transformation → qualité des données → restitution BI**
 
-Le projet s'appuie sur **Snowflake, SQL, dbt et Power BI**, avec une architecture organisée autour des couches `RAW`, `DWH` et `SEM`.
-
-```text
-Superstore CSV
-      ↓
-Snowflake RAW
-      ↓
-dbt — Structuration
-      ↓
-Snowflake DWH
-      ↓
-dbt — Nettoyage & standardisation
-      ↓
-Snowflake SEM
-      ↓
-Power BI
-      ↓
-KPI & Business Analytics
-```
+Le projet s'appuie principalement sur **Snowflake, SQL, dbt et Power BI**, avec une organisation en couches `RAW`, `DWH` et `SEM`.
 
 ---
 
-## 🎯 Objectifs du projet
+## 🎯 Objectif du projet
 
-Le projet répond à deux objectifs complémentaires.
+Au-delà de la création d'un dashboard, l'objectif est de reproduire les principales étapes d'un environnement Data moderne et de comprendre la place de chaque technologie dans la chaîne.
 
-### Côté Data
+Le projet permet notamment de mettre en pratique :
 
-Mettre en place une architecture permettant de :
-
-- centraliser les données dans Snowflake ;
-- séparer les données brutes des données transformées ;
-- construire un Data Warehouse structuré ;
-- nettoyer et standardiser les données avant leur consommation ;
-- appliquer des contrôles de qualité avec dbt ;
-- versionner l'ensemble du projet avec Git et GitHub.
-
-### Côté Business Intelligence
-
-Transformer les données préparées en indicateurs permettant d'analyser :
-
-- le chiffre d'affaires ;
-- la rentabilité ;
-- les commandes ;
-- les clients ;
-- les produits et catégories ;
-- les segments clients ;
-- les performances géographiques ;
-- l'évolution des KPI dans le temps ;
-- les écarts par rapport à N-1.
+* la création d'un environnement Snowflake ;
+* l'ingestion de données dans une couche `RAW` ;
+* la modélisation d'un Data Warehouse ;
+* les transformations SQL avec dbt ;
+* le nettoyage et la standardisation des données ;
+* la mise en place de contrôles de Data Quality ;
+* la création d'un modèle analytique dans Power BI ;
+* la documentation et le versioning du projet avec Git/GitHub.
 
 ---
 
 # 🏗️ Architecture globale
 
-L'architecture du projet repose sur une séparation claire des responsabilités.
+Le projet suit une architecture en plusieurs étapes :
 
 ```text
-                         ┌──────────────────────┐
-                         │    Superstore CSV    │
-                         │       Source         │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Snowflake RAW     │
-                         │                      │
-                         │    RAW_SUPERSTORE    │
-                         └──────────┬───────────┘
-                                    │
-                                    │ dbt
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Snowflake DWH     │
-                         │                      │
-                         │ DIM_CUSTOMER_DWH     │
-                         │ DIM_PRODUCT_DWH      │
-                         │ DIM_LOCATION_DWH     │
-                         │ DIM_SHIPPING_DWH     │
-                         │ FACT_SALES_DWH       │
-                         └──────────┬───────────┘
-                                    │
-                                    │ dbt
-                                    ▼
-                         ┌──────────────────────┐
-                         │ Nettoyage &          │
-                         │ standardisation      │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │    Snowflake SEM     │
-                         │                      │
-                         │ DIM_CUSTOMER         │
-                         │ DIM_PRODUCT          │
-                         │ DIM_LOCATION         │
-                         │ DIM_SHIPPING         │
-                         │ FACT_SALES           │
-                         └──────────┬───────────┘
-                                    │
-                                    ▼
-                         ┌──────────────────────┐
-                         │      Power BI        │
-                         │                      │
-                         │ Star Schema          │
-                         │ DAX                  │
-                         │ Dashboard            │
-                         └──────────────────────┘
+                 ┌──────────────────────┐
+                 │    Superstore CSV    │
+                 │       Source         │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │    Snowflake RAW     │
+                 │                      │
+                 │    RAW_SUPERSTORE    │
+                 └──────────┬───────────┘
+                            │
+                            │ dbt
+                            ▼
+                 ┌──────────────────────┐
+                 │    Snowflake DWH     │
+                 │                      │
+                 │ DIM_CUSTOMER_DWH     │
+                 │ DIM_PRODUCT_DWH      │
+                 │ DIM_LOCATION_DWH     │
+                 │ DIM_SHIPPING_DWH     │
+                 │ FACT_SALES_DWH       │
+                 └──────────┬───────────┘
+                            │
+                            │ dbt
+                            ▼
+                 ┌──────────────────────┐
+                 │ Nettoyage &          │
+                 │ standardisation      │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │    Snowflake SEM     │
+                 │                      │
+                 │ DIM_CUSTOMER         │
+                 │ DIM_PRODUCT          │
+                 │ DIM_LOCATION         │
+                 │ DIM_SHIPPING         │
+                 │ FACT_SALES           │
+                 └──────────┬───────────┘
+                            │
+                            ▼
+                 ┌──────────────────────┐
+                 │      Power BI        │
+                 │                      │
+                 │   Star Schema        │
+                 │   DAX                │
+                 │   Dashboard          │
+                 └──────────────────────┘
 ```
 
-La logique de préparation est donc volontairement séparée de la restitution :
+La répartition des responsabilités est volontairement simple :
 
 ```text
 SQL / Snowflake
@@ -129,11 +97,13 @@ Power BI
 → modèle analytique, DAX, visualisation et analyse
 ```
 
+Cette séparation permet de conserver une chaîne de traitement lisible et de limiter la dispersion des transformations entre les différents outils.
+
 ---
 
 # ❄️ Snowflake
 
-Snowflake constitue la plateforme centrale du projet.
+**Snowflake constitue la plateforme centrale de stockage et de calcul du projet.**
 
 La base utilisée est :
 
@@ -141,7 +111,7 @@ La base utilisée est :
 ECOMMERCE_DWH
 ```
 
-avec les principales couches :
+Elle est organisée autour de trois couches :
 
 ```text
 ECOMMERCE_DWH
@@ -164,9 +134,19 @@ ECOMMERCE_DWH
     └── FACT_SALES
 ```
 
-La couche `RAW` conserve les données sources, la couche `DWH` porte la modélisation structurée et la couche `SEM` prépare les données pour la consommation BI.
+### `RAW`
 
-Les scripts de configuration, de gestion des rôles, de permissions et d'ingestion sont documentés séparément.
+La couche `RAW` conserve les données sources après leur ingestion dans Snowflake.
+
+### `DWH`
+
+La couche `DWH` contient les données structurées et modélisées pour l'analyse.
+
+### `SEM`
+
+La couche `SEM` correspond à la couche analytique préparée pour la consommation BI.
+
+Les scripts SQL utilisés pour créer l'environnement, gérer les rôles et permissions et charger les données sont documentés séparément.
 
 👉 **[Voir la documentation SQL & Snowflake](SQL/README.md)**
 
@@ -174,9 +154,9 @@ Les scripts de configuration, de gestion des rôles, de permissions et d'ingesti
 
 # 🔧 dbt
 
-dbt constitue le cœur de la transformation du projet.
+**dbt constitue le cœur de la transformation du projet.**
 
-Il prend les données de la couche `RAW`, construit le Data Warehouse puis prépare la couche `SEM`.
+Il prend les données présentes dans `RAW`, construit les modèles du Data Warehouse puis prépare la couche `SEM`.
 
 ```text
 RAW
@@ -188,41 +168,41 @@ Nettoyage / standardisation
 SEM
 ```
 
-### DWH
+### Modélisation
 
-Les modèles DWH structurent notamment :
+Les modèles DWH permettent notamment de structurer :
 
-- les clients ;
-- les produits ;
-- la géographie ;
-- les modes de livraison ;
-- les ventes.
+* les clients ;
+* les produits ;
+* la géographie ;
+* les modes de livraison ;
+* les ventes.
 
-Une attention particulière est portée à la déduplication des dimensions et à la cohérence des relations entre la table de faits et les dimensions.
+Une attention particulière est portée à la déduplication des dimensions et à la cohérence entre la table de faits et les dimensions.
 
-### Nettoyage et standardisation
+### Nettoyage
 
-Entre le DWH et la SEM, une phase dédiée permet de préparer les données finales pour Power BI.
+La préparation de la couche `SEM` comprend notamment :
 
-Elle comprend notamment :
-
-- `TRIM` des champs textuels ;
-- conversion des dates ;
-- standardisation des types ;
-- gestion de la précision des montants ;
-- filtrage des valeurs vides ou invalides ;
-- préparation des noms de colonnes attendus par la couche BI.
+* nettoyage des champs textuels ;
+* conversion des dates ;
+* standardisation des types ;
+* gestion de la précision des montants ;
+* filtrage de certaines valeurs invalides ;
+* préparation des colonnes nécessaires à la couche BI.
 
 ### Data Quality
 
-La qualité des données est directement gérée avec dbt grâce à :
+La qualité des données est intégrée directement dans dbt grâce à des tests standards et des règles métier personnalisées.
 
-- `not_null` ;
-- `unique` ;
-- `relationships` ;
-- tests métier personnalisés.
+Les tests couvrent notamment :
 
-Ces tests couvrent notamment les quantités, les remises, les ventes et la cohérence des dates.
+* la complétude ;
+* l'unicité ;
+* les relations entre les tables ;
+* la cohérence des quantités ;
+* la validité des remises ;
+* la cohérence des montants et des dates.
 
 👉 **[Voir la documentation complète du projet dbt](DBT/README.md)**
 
@@ -230,70 +210,48 @@ Ces tests couvrent notamment les quantités, les remises, les ventes et la cohé
 
 # 📊 Power BI
 
-Power BI constitue la couche de restitution du projet.
+**Power BI constitue la couche de restitution et d'analyse du projet.**
 
-Le rapport exploite la couche `SEM` de Snowflake et repose sur un modèle en étoile permettant d'analyser la performance commerciale.
+Le rapport exploite les données préparées dans la couche `SEM` et repose sur une **modélisation en étoile (Star Schema)**.
 
-Les principaux KPI sont :
+![Dashboard](Power%20BI/Dashboard.PNG)
 
-- **Chiffre d'affaires**
-- **Bénéfice**
-- **Marge %**
-- **Nombre de commandes**
-- **Nombre de clients**
-- **Panier moyen**
-- **Évolution du CA vs N-1**
-- **Performance des catégories et produits**
-- **Performance des segments clients**
-- **Performance géographique**
+Le rapport permet d'explorer la performance commerciale selon plusieurs dimensions :
 
-Le dashboard cherche à répondre à des questions concrètes :
+* temps ;
+* produits ;
+* catégories ;
+* clients ;
+* segments ;
+* géographie ;
+* commandes ;
+* rentabilité.
 
-- Comment évolue le chiffre d'affaires dans le temps ?
-- Quelles catégories génèrent le plus de revenus ?
-- Quels produits contribuent le plus à la performance ?
-- Quels segments clients représentent la plus grande contribution ?
-- Quelles zones géographiques présentent les plus fortes performances ?
-- Comment les KPI évoluent-ils par rapport à N-1 ?
+L'objectif est de fournir une lecture interactive de la donnée et de faciliter l'identification des tendances, variations et points d'attention.
+
+![Modèle de données](Power%20BI/Data_Model.PNG)
+
+La documentation détaillée du rapport Power BI est disponible ici :
 
 👉 **[Voir la documentation Power BI](Power%20BI/README.md)**
 
 ---
 
-# 🧮 DAX
+# 🧮 Mesures DAX
 
-Les indicateurs analytiques sont calculés avec DAX dans Power BI.
+Les indicateurs utilisés dans le rapport sont calculés avec **DAX**.
 
-Quelques exemples :
+Les mesures couvrent notamment les besoins liés à :
 
-```DAX
-CA = SUM(Fact_Sales[Sales])
+* la performance commerciale ;
+* la rentabilité ;
+* le suivi des commandes et des clients ;
+* les analyses temporelles ;
+* les comparaisons avec la période précédente.
 
-Nb de clients =
-DISTINCTCOUNT(Fact_Sales[Customer ID])
+Afin d'éviter de dupliquer la documentation, les mesures sont regroupées dans une documentation dédiée.
 
-Nb de commandes =
-DISTINCTCOUNT(Fact_Sales[Order ID])
-
-Bénéfice =
-SUM(Fact_Sales[Profit])
-
-Marge % =
-DIVIDE([Bénéfice], [CA])
-
-Panier moyen =
-DIVIDE([CA], [Nb de commandes])
-
-CA N1 =
-CALCULATE(
-    [CA],
-    SAMEPERIODLASTYEAR(Calendrier[Date])
-)
-```
-
-La dimension calendrier est conservée dans Power BI afin de gérer les analyses temporelles et les mesures associées.
-
-👉 **[Voir la documentation des mesures DAX](Mesures/README_Mesures_DAX.md)**
+👉 **[Voir la documentation complète des mesures DAX](Mesures/README_Mesures_DAX.md)**
 
 ---
 
@@ -303,20 +261,20 @@ Le projet utilise le dataset **Superstore** comme source initiale.
 
 **Source :** Superstore Dataset — Kaggle
 
-[Voir le dataset sur Kaggle](https://www.kaggle.com/datasets/vivek468/superstore-dataset-final)
+👉 [Voir le dataset sur Kaggle](https://www.kaggle.com/datasets/vivek468/superstore-dataset-final)
 
-Le dataset contient notamment des informations sur :
+Le dataset contient notamment des informations relatives :
 
-- les commandes ;
-- les clients ;
-- les produits ;
-- les catégories et sous-catégories ;
-- les ventes ;
-- les quantités ;
-- les remises ;
-- les bénéfices ;
-- la localisation ;
-- les modes d'expédition.
+* aux commandes ;
+* aux clients ;
+* aux produits ;
+* aux catégories et sous-catégories ;
+* aux ventes ;
+* aux quantités ;
+* aux remises ;
+* aux bénéfices ;
+* à la localisation ;
+* aux modes d'expédition.
 
 La donnée suit ensuite le parcours :
 
@@ -336,42 +294,30 @@ Power BI
 
 # ✅ Data Quality
 
-La qualité n'est pas traitée comme une étape isolée : elle est intégrée directement au développement dbt.
+La qualité des données est intégrée dans la chaîne de transformation plutôt que traitée uniquement à la fin du projet.
 
-Le projet utilise :
+Les contrôles sont principalement réalisés dans dbt à travers :
 
 ```text
                     dbt
                      │
           ┌──────────┴──────────┐
           │                     │
-     Tests standards       Tests métier
+   Tests standards        Tests métier
           │                     │
-      not_null              quantity_positive
-      unique                discount_valid
-      relationships         sales_positive
-                            ship_date_after_order_date
+      not_null             quantity_positive
+      unique               discount_valid
+      relationships        sales_positive
+                           ship_date_after_order_date
 ```
 
-Les tests sont déclarés dans les fichiers YAML et exécutés avec :
+Les tests sont déclarés dans les fichiers YAML et peuvent être exécutés avec :
 
 ```bash
 dbt test --target dev
 ```
 
-Le principe est simple : le test retourne les lignes qui ne respectent pas la règle définie. S'il ne retourne aucune ligne non conforme, le test passe.
-
----
-
-# 📈 Dashboard
-
-![Dashboard](Power%20BI/Dashboard.PNG)
-
-Le rapport permet d'explorer les performances commerciales selon plusieurs dimensions : temps, produits, clients, segments et géographie.
-
-![Modèle de données](Power%20BI/Data_Model.PNG)
-
-Le modèle analytique s'appuie sur une architecture en étoile afin de faciliter les analyses et les calculs DAX.
+Cette organisation permet de vérifier les règles de qualité avant la consommation des données dans la couche analytique.
 
 ---
 
@@ -417,15 +363,15 @@ Ecommerce_Data_Platform_Snowflake_dbt_PowerBi/
 
 # 🧭 Documentation du projet
 
-Le README principal donne une vue d'ensemble de la plateforme. Chaque partie possède ensuite sa propre documentation pour aller plus loin.
+Ce README présente la vision globale de la plateforme. Chaque composant possède ensuite sa propre documentation technique.
 
-| Partie | Documentation |
-|---|---|
-| 🗄️ SQL / Snowflake | [SQL/README.md](SQL/README.md) |
-| 🔧 DBT | [DBT/README.md](DBT/README.md) |
-| 📊 Power BI | [Power BI/README.md](Power%20BI/README.md) |
-| 🧮 Mesures DAX | [Mesures/README_Mesures_DAX.md](Mesures/README_Mesures_DAX.md) |
-| 📸 Screenshots | [Screenshots/README.md](Screenshots/README.md) |
+| Partie              | Documentation                                                  |
+| ------------------- | -------------------------------------------------------------- |
+| 🗄️ SQL / Snowflake | [SQL/README.md](SQL/README.md)                                 |
+| 🔧 dbt              | [DBT/README.md](DBT/README.md)                                 |
+| 📊 Power BI         | [Power BI/README.md](Power%20BI/README.md)                     |
+| 🧮 Mesures DAX      | [Mesures/README_Mesures_DAX.md](Mesures/README_Mesures_DAX.md) |
+| 📸 Screenshots      | [Screenshots/README.md](Screenshots/README.md)                 |
 
 ---
 
@@ -433,49 +379,73 @@ Le README principal donne une vue d'ensemble de la plateforme. Chaque partie pos
 
 ### Data Platform
 
-- **Snowflake**
-- SQL
+* **Snowflake**
+* **SQL**
 
 ### Transformation
 
-- **dbt**
-- Jinja
+* **dbt**
+* **Jinja**
 
 ### Data Quality
 
-- dbt Tests
-- Tests génériques
-- Tests métier
+* **dbt Tests**
+* Tests génériques
+* Tests métier
 
 ### Business Intelligence
 
-- **Power BI**
-- DAX
-- Power Query
-- Star Schema
+* **Power BI**
+* **DAX**
+* **Power Query**
+* **Star Schema**
 
 ### Versioning
 
-- Git
-- GitHub
+* **Git**
+* **GitHub**
 
 ---
 
 # 🎓 Compétences mises en pratique
 
-Ce projet permet de mettre en pratique plusieurs aspects d'un environnement Data moderne :
+Ce projet permet de mettre en pratique plusieurs compétences autour de la Data et de la Business Intelligence :
 
-- conception d'une architecture Data Warehouse ;
-- modélisation dimensionnelle ;
-- développement SQL ;
-- utilisation de Snowflake ;
-- transformation ELT avec dbt ;
-- nettoyage et standardisation des données ;
-- mise en place de tests de qualité ;
-- gestion des dépendances entre modèles ;
-- conception de KPI avec DAX ;
-- création d'un dashboard Power BI ;
-- organisation et documentation d'un projet Data avec Git/GitHub.
+* conception d'une architecture Data Warehouse ;
+* modélisation dimensionnelle ;
+* développement SQL ;
+* utilisation de Snowflake ;
+* transformation ELT avec dbt ;
+* nettoyage et standardisation des données ;
+* mise en place de tests de qualité ;
+* gestion des dépendances entre modèles ;
+* développement de mesures DAX ;
+* conception d'un dashboard Power BI ;
+* documentation et organisation d'un projet Data avec Git/GitHub.
+
+---
+
+# 🚀 Ce que ce projet illustre
+
+À travers ce projet, l'objectif est surtout de montrer la capacité à **comprendre une chaîne Data dans son ensemble**, et pas uniquement à utiliser un outil isolé.
+
+```text
+Source
+  ↓
+Ingestion
+  ↓
+Stockage
+  ↓
+Transformation
+  ↓
+Data Quality
+  ↓
+Modélisation
+  ↓
+Business Intelligence
+```
+
+Chaque technologie intervient à une étape précise du processus, avec une séparation claire entre la préparation de la donnée et sa restitution.
 
 ---
 
@@ -483,8 +453,7 @@ Ce projet permet de mettre en pratique plusieurs aspects d'un environnement Data
 
 **Ahmed Zouaghi**
 
-Master 2 SIAD — Business Intelligence  
+Master 2 SIAD — Business Intelligence
 Université de Lille
 
 🔗 [GitHub](https://github.com/AhmedZouaghi59)
-```
