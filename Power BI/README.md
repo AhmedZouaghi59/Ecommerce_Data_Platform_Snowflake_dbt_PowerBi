@@ -199,8 +199,8 @@ Les différents composants du projet sont documentés séparément :
 * [📊 Modèle de données](Data_Model.PNG)
 * [📈 Dashboard Power BI](Dashboard.PNG)
 * [🧮 Mesures DAX](../Mesures/README_Mesures_DAX.md)
-* [🔧 Projet dbt](../DBT/README.md)
-* [🗄️ Scripts SQL Snowflake](../SQL/README.md)
+* [🔧 Projet dbt](../DBT/)
+* [🗄️ Scripts SQL Snowflake](../SQL/)
 
 Cette organisation permet de retrouver facilement la documentation technique de chaque partie du pipeline.
 
